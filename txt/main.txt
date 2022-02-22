@@ -1,0 +1,9 @@
+<H1>ARCA - Home</H1>
+
+<P class="w3-large">ARCA is a database of arboviruses – Chikungunya,
+Dengue, and Zika – reported cases in the Americas. The case reported
+data was extracted from the <A href='https://www3.paho.org/data/index.php/en/' target='_blank'>Pan American Health Organization</A> website.
+
+The <A href='?pg=guide'>ARCA Guide</A> page describes the contents and its respective functionality
+within the ARCA database. Use the <A href='?pg=search'>Search ARCA</A> page to query the
+database.</P>

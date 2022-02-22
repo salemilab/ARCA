@@ -1,0 +1,22 @@
+.footer {
+  overflow: hidden;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+}
+
+.pagetitle {
+    font-family: Verdana;
+    font-size: 36pt;
+}
+.pagesubtitle {
+    font-family: Verdana;
+    font-size: 22pt;
+}
+
+.plotdiv {
+/*    margin: 10px; */
+    width: 95%;
+    height: 500px;
+/*    border: 1px solid blue; */
+}
