@@ -142,13 +142,14 @@ def getResults(fields):
             results.append(C)
             C.write_to_file("results/" + C.csvfile)
             C.write_to_file("results/" + C.tsvfile, delimiter='\t')
+            C.write_to_excel("results/" + C.xlsfile)
     finally:
         db.close()
     return results
     
 def showResults(fields):
     countrydata = getResults(fields)
-    sys.stdout.write("""<DIV class="w3-panel">
+    sys.stdout.write("""<DIV class="w3-panel" id="mainpanel">
   <H1>ARCA - Results</H1>
 """)
     dividx = 1
@@ -156,11 +157,12 @@ def showResults(fields):
         tblname = "table_" + str(dividx)
         divname = "plot_" + str(dividx)
 
-        sys.stdout.write("""<DIV class='w3-bar w3-food-aubergine w3-padding'><SPAN class='w3-xlarge'>{}</SPAN>
-<SPAN class='w3-large'> | <INPUT type='checkbox' id='ch1_{}' onchange='toggle_visible(this.checked, "{}");'> <LABEL for='ch1_{}'>Table</LABEL> | <INPUT type='checkbox' id='ch2_{}' onchange='toggle_visible(this.checked, "{}");'> <LABEL for='ch2_{}'>Plot</LABEL>""".format(C.country, dividx, tblname, dividx, dividx, divname, dividx))
-        sys.stdout.write(""" | Download as: <A href='results/{}' download>Comma-delimited</A> - <A href='results/{}' download>Tab-delimited</A> - <A href='xxx'>Excel</A>""".format(C.csvfile, C.tsvfile))
+        sys.stdout.write("""<DIV class='w3-bar w3-food-aubergine w3-padding'>
+<DIV class="w3-bar-item"><SPAN class='w3-xlarge'>{}</SPAN></DIV>
+<DIV class="w3-bar-item w3-right"><SPAN class='w3-large'><INPUT type='checkbox' id='ch1_{}' onchange='toggle_visible(this.checked, "{}", {});'> <LABEL for='ch1_{}'>Table</LABEL> | <INPUT type='checkbox' id='ch2_{}' onchange='toggle_visible(this.checked, "{}", {});'> <LABEL for='ch2_{}'>Plot</LABEL>""".format(C.country, dividx, tblname, dividx, dividx, dividx, divname, dividx, dividx))
+        sys.stdout.write(""" | Download as: <A href='results/{}' download>Comma-delimited</A> - <A href='results/{}' download>Tab-delimited</A> - <A href='results/{}' download>Excel</A>""".format(C.csvfile, C.tsvfile, C.xlsfile))
 
-        sys.stdout.write("""</SPAN></DIV>""")
+        sys.stdout.write("""</SPAN></DIV></DIV>""")
         
         sys.stdout.write("""<DIV id='{}' style='display:none;'><TABLE class='w3-table w3-striped w3-border'>
 <TR>

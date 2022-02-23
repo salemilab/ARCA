@@ -60,11 +60,15 @@ function update_countries(reg_menu, country_menu) {
 
 // Code for checkboxes
 
-function toggle_visible(chk, elt) {
+function toggle_visible(chk, elt, idx) {
     el = document.getElementById(elt);
     if (chk) {
 	el.style.display = 'block';
-	el.style.width = '100%';
+	el.style.width = "100%";
+	fname = "draw_plot_" + idx + "()"
+	//	eval(fname);
+	f = window.Function(fname);
+	f();
     } else {
 	el.style.display = 'none';
     }

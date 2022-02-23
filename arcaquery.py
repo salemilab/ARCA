@@ -1,6 +1,7 @@
 import sys
 import arcadb
 from datetime import datetime
+import xlsxwriter
 
 def cleanCountryName(name):
     return name.replace(" ", "_").replace("(", "_").replace(")", "")
@@ -82,6 +83,7 @@ class Results(object):
         nviruses = len(self.virus_ids)
         ntrace = 1
         traces = []
+        sys.stdout.write("""function draw_{}() {{""".format(divname))
         for i in range(nviruses):
             j = i + 2
             virus_name = self.viruses[i]
@@ -94,7 +96,8 @@ class Results(object):
                 xs.append("{:.2f}".format(row[0] + row[1] / 52))
                 ys.append(row[j])
                           
-            sys.stdout.write(""" var {} = {{
+            sys.stdout.write("""
+ var {} = {{
   x: [{}],
   y: [{}],
   type: 'bar',
@@ -115,6 +118,7 @@ var layout = {{
 }};
 
 Plotly.newPlot('{}', data, layout);
+}}
 """.format(", ".join(traces), self.country, divname))
 
 
@@ -124,3 +128,24 @@ Plotly.newPlot('{}', data, layout);
             for row in self.data:
                 out.write(self.country + delimiter + delimiter.join([str(x) for x in row]) + "\n")
                 
+    def write_to_excel(self, filename):
+        wb = xlsxwriter.Workbook(filename, {'strings_to_numbers': True})
+        ### workbook.set_properties({'author': 'A. Riva, ariva@ufl.edu', 'company': 'DiBiG - ICBR Bioinformatics'}) # these should be read from conf or command-line
+        bold = wb.add_format({'bold': 1})
+        ws = wb.add_worksheet("Cases")
+        row = 0
+        col = 0
+        for cn in self.colnames:
+            ws.write(row, col, self.colnames[col], bold)
+            col += 1
+
+        r = 1
+        for row in self.data:
+            ws.write(r, 0, self.country)
+            col = 1
+            for x in row:
+                ws.write(r, col, x)
+                col += 1
+            r += 1
+        wb.close()
+        
