@@ -7,3 +7,6 @@ data was extracted from the <A href='https://www3.paho.org/data/index.php/en/' t
 The <A href='?pg=guide'>ARCA Guide</A> page describes the contents and its respective functionality
 within the ARCA database. Use the <A href='?pg=search'>Search ARCA</A> page to query the
 database.</P>
+
+<H3>Credits</H3>
+Coming soon.
