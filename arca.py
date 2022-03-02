@@ -7,10 +7,10 @@ import arcaquery
 
 # Util
 
-def loadFile(filename):
+def loadFile(filename, data):
     with open(filename, "r") as f:
         text = f.read()
-    sys.stdout.write(text)
+    sys.stdout.write(text.format(**data))
 
 def getValues(fields, key):
     if key in fields:
@@ -47,7 +47,7 @@ def preamble(page):
     </DIV>
     <DIV class="w3-bar w3-food-aubergine w3-xlarge">
       <A href='?pg=home' class="w3-bar-item w3-button {}">Home</A>
-      <A href='?pg=guide' class="w3-bar-item w3-button {}">ARCA Guide</A>
+      <A href='?pg=summary' class="w3-bar-item w3-button {}">ARCA Summary</A>
       <A href='?pg=search' class="w3-bar-item w3-button {}">Search ARCA</A>
     </DIV>
 """.format("w3-light-grey" if page == "home" else "",
@@ -56,21 +56,31 @@ def preamble(page):
     
 def closing():
     sys.stdout.write("""    
-    <DIV class='w3-cell-row w3-green footer w3-padding'><DIV class='w3-cell'>&nbsp;&copy; 2022 M. Meneses, A. Riva, University of Florida</DIV></DIV>
+    <DIV class='w3-cell-row w3-green footer w3-padding'><DIV class='w3-cell'>&nbsp;&copy; 2022 Salemi Lab, University of Florida</DIV></DIV>
    </BODY>
 </HTML>
 """)
 
 def showHome():
-    sys.stdout.write("""<DIV class="w3-panel">""")
-    loadFile("txt/main.txt")
-    sys.stdout.write("""</DIV>""")
-
-def showGuide():
-    sys.stdout.write("""<DIV class="w3-panel">""")
-    loadFile("txt/guide.txt")
-    sys.stdout.write("""</DIV>""")
-
+    db = arcadb.opendb()
+    try:
+        data = arcadb.getSummaryData(db)
+        sys.stdout.write("""<DIV class="w3-panel">""")
+        loadFile("txt/main.txt", data)
+        sys.stdout.write("""</DIV>""")
+    finally:
+        db.close()
+        
+def showSummary():
+    db = arcadb.opendb()
+    try:
+        data = arcadb.getSummaryData(db)
+        sys.stdout.write("""<DIV class="w3-panel">""")
+        loadFile("txt/stats.txt", data)
+        sys.stdout.write("""</DIV>""")
+    finally:
+        db.close()
+        
 # Search page
 
 def generateMenu(name, choices, rows=4):
@@ -88,6 +98,9 @@ def showSearch():
     
     sys.stdout.write("""<DIV class="w3-panel">
     <H1>ARCA - Search</H1>
+""")
+    loadFile("txt/guide.txt", {})
+    sys.stdout.write("""
     <FORM action="#" id="arca_search" method="post">
     <DIV class='w3-cell-row w3-padding'>
       <DIV class='w3-col m4 w3-padding'><LABEL>Choose one or more viruses:</LABEL>
@@ -191,8 +204,8 @@ def main():
 
     if page == "home":
         showHome()
-    elif page == "guide":
-        showGuide()
+    elif page == "summary":
+        showSummary()
     elif page == "search":
         showSearch()
     elif page == "results":

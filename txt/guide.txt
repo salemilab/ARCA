@@ -1,6 +1,5 @@
-<H1>Guide to ARCA</H1>
-
-<P class="w3-large">The ARCA database allows users to select the arbovirus, geographical
+<H3>Instructions</H3>
+<P>The ARCA database allows users to select the arbovirus, geographical
 region, country, and/or time range of their choice within a single
 output. To select multiple arboviruses, regions, or countries, users
 can either hold down the control (ctrl) button to select multiple
@@ -12,9 +11,3 @@ virus, geographical region, country, year, week, and the reported
 cases for that week. Users can also plot their query to visualize the
 case reported data they are interested in.</P>
 
-<P class="w3-large">The database contains
-Dengue case reports from 2014 to 2021, Chikungunya case reports from
-2013 to 2021, and Zika case reports from 2016 to 2021. Because the
-PAHO database reported Chikungunya cases on a monthly basis between
-the years of 2013 and 2017, the database reports this data by the last
-week of that month.</P>

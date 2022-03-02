@@ -1,0 +1,42 @@
+<H1>ARCA Summary</H1>
+
+<P class="w3-large">The database contains Dengue case reports from {Dengue_i} to {Dengue_f},
+Chikungunya case reports from {Chikungunya_i} to {Chikungunya_f}, and Zika case reports from
+{Zika_i} to {Zika_f}. Because the PAHO database reported Chikungunya cases on a monthly basis between
+the years of 2013 and 2017, the database reports this data by the last
+week of that month.</P>
+
+<BR><BR>
+
+<h2>Total number of cases by virus:</h2>
+<DIV class='w3-row'>
+<DIV class='w3-col m3'>&nbsp;</DIV>
+<DIV class='w3-col m6'>
+<table class='w3-table w3-border w3-bordered'>
+<TR class='w3-food-aubergine'><TH>Virus</TH><TH class='w3-right'>Cases</TH></TR>
+<TR><TD>Chikungunya</TD><TD class='w3-right'>{Chikungunya_cases}</TD></TR>
+<TR><TD>Dengue</TD><TD class='w3-right'>{Dengue_cases}</TD></TR>
+<TR><TD>Zika</TD><TD class='w3-right'>{Zika_cases}</TD></TR>
+</TABLE>
+</DIV>
+<DIV class='w3-col m3'>&nbsp;</DIV>
+</DIV>
+
+<BR><BR>
+
+<h2>Total number of cases by geographical region:</h2>
+<DIV class='w3-row'>
+<DIV class='w3-col m3'>&nbsp;</DIV>
+<DIV class='w3-col m6'>
+<table class='w3-table w3-border w3-bordered'>
+<TR class='w3-food-aubergine'><TH>Region</TH><TH class='w3-right'>Cases</TH></TR>
+{regcounts}
+</TABLE>
+</DIV>
+<DIV class='w3-col m3'>&nbsp;</DIV>
+</DIV>
+
+
+
+
+<BR><BR><BR><BR>
