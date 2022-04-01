@@ -15,21 +15,38 @@ class Results(object):
     virus_ids = []
     viruses = []
     rawdata = []
-    data = []
+    data = {}
+    keys = None
     headers = []
     colnames = []
+    rowformat = None
     csvfile = ""
     tsvfile = ""
     xlsfile = ""
+    viruscolors = ["",          # Virus IDs start at 1
+                   "rgb(255, 140, 0)",
+                   "rgb(0,   128, 0)",
+                   "rgb(148, 0,   211)"]
     
     def __init__(self, countryid):
         self.countryid = countryid
         self.virus_ids = []
         self.viruses = []
         self.rawdata = []
-        self.data = []
+        self.data = {}
+        self.keys = set()
         self.headers = []
-        
+
+    def clone(self):
+        new = Results(self.countryid)
+        new.country = "Total"
+        new.virus_ids = self.virus_ids
+        new.viruses = self.viruses
+        new.headers = self.headers
+        new.colnames = self.colnames
+        new.rowformat = self.rowformat
+        return new
+    
     def query(self, db, virus_ids, start_year, start_week, end_year, end_week):
         self.country = arcadb.getCountryName(db, self.countryid)
         clean = cleanCountryName(self.country)
@@ -68,8 +85,10 @@ class Results(object):
                 continue
             if rd[0] != row[0] or rd[1] != row[1]:
                 if row[0]:
-                    self.data.append(row)
+                    key = "{}_{:02}".format(rd[0], rd[1])
                     row = ["", ""] + [0]*ncolumns
+                    self.data[key] = row
+                    self.keys.add(key)
                 row[0] = rd[0]
                 row[1] = rd[1]
                 
@@ -77,8 +96,28 @@ class Results(object):
             field = vp[virus]
             #sys.stdout.write("{}\n".format(field))
             row[field] = rd[3]
-        self.data.append(row)
-        
+        #self.data.append(row)
+
+    def add(self, other):
+        ncolumns = len(self.viruses)
+        newdata = {}
+        keyset = self.keys.union(other.keys)
+        keys = list(keyset)
+        keys.sort()
+        for k in keys:
+            d1 = self.data[k] if k in self.data else None
+            d2 = other.data[k] if k in other.data else None
+            if d1 and d2:
+                for i in range(ncolumns):
+                    d1[i+2] += d2[i+2]
+                newdata[k] = d1
+            elif d1:
+                newdata[k] = d1
+            else:
+                newdata[k] = d2
+        self.data = newdata
+        self.keys = keyset
+                
     def generate_plot(self, divname):
         nviruses = len(self.virus_ids)
         ntrace = 1
@@ -92,7 +131,8 @@ class Results(object):
 
             xs = []
             ys = []
-            for row in self.data:
+            for k in sorted(self.data.keys()):
+                row = self.data[k]
                 xs.append("{:.2f}".format(row[0] + row[1] / 52))
                 ys.append(row[j])
                           
@@ -100,11 +140,15 @@ class Results(object):
  var {} = {{
   x: [{}],
   y: [{}],
-  type: 'bar',
+  type: 'scatter',
+  line: {{
+    color: '{}',            
+    shape: 'spline'
+  }},
   name: '{}',
 }};
 
-""".format(tracename, ",".join(xs), ",".join([ str(y) for y in ys ]), virus_name))
+""".format(tracename, ",".join(xs), ",".join([ str(y) for y in ys ]), self.viruscolors[int(self.virus_ids[i])],  virus_name))
             ntrace += 1
         sys.stdout.write("""
 var data = [{}];
@@ -125,7 +169,8 @@ Plotly.newPlot('{}', data, layout);
     def write_to_file(self, filename, delimiter=','):
         with open(filename, "w") as out:
             out.write(delimiter.join(self.colnames) + "\n")
-            for row in self.data:
+            for k in sorted(self.data.keys()):
+                row = self.data[k]
                 out.write(self.country + delimiter + delimiter.join([str(x) for x in row]) + "\n")
                 
     def write_to_excel(self, filename):
@@ -140,7 +185,8 @@ Plotly.newPlot('{}', data, layout);
             col += 1
 
         r = 1
-        for row in self.data:
+        for k in sorted(self.data.keys()):
+            row = self.data[k]
             ws.write(r, 0, self.country)
             col = 1
             for x in row:

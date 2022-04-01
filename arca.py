@@ -111,12 +111,12 @@ def showSearch():
       <DIV class='w3-col m4 w3-padding'><LABEL>Choose start year:</LABEL>
         <INPUT name='f_start_year' type='number' value='{}' min='{}' max='{}' class='w3-input w3-border'>
         <LABEL>Choose start week:</LABEL>
-        <INPUT name='f_start_week' type='number' value='1' min='1' max='52' class='w3-input w3-border'>
+        <INPUT name='f_start_week' type='number' value='1' min='1' max='53' class='w3-input w3-border'>
       </DIV>
       <DIV class='w3-col m4 w3-padding'><LABEL>Choose end year:</LABEL>
         <INPUT name='f_end_year' type='number' value='{}' min='{}' max='{}' class='w3-input w3-border'>
         <LABEL>Choose end week:</LABEL>
-        <INPUT name='f_end_week' type='number' value='52' min='1' max='52' class='w3-input w3-border'>
+        <INPUT name='f_end_week' type='number' value='53' min='1' max='53' class='w3-input w3-border'>
       </DIV>
   </DIV>""".format(F.start_year, F.start_year, F.end_year, F.end_year, F.start_year, F.end_year))
     sys.stdout.write("""<DIV class='w3-cell-row w3-padding'>
@@ -166,7 +166,9 @@ def showResults(fields):
   <H1>ARCA - Results</H1>
 """)
     dividx = 1
+    total = countrydata[0].clone()
     for C in countrydata:
+        total.add(C)
         tblname = "table_" + str(dividx)
         divname = "plot_" + str(dividx)
 
@@ -182,7 +184,9 @@ def showResults(fields):
 {}
 </TR>
         """.format(tblname, C.headers))
-        for row in C.data:
+
+        for k in sorted(C.data.keys()):
+            row = C.data[k]
             sys.stdout.write(C.rowformat.format(*row))
         sys.stdout.write("""</TABLE></DIV>
 <DIV id='{}' style='display:none;' class='plotdiv'></DIV>
@@ -190,6 +194,31 @@ def showResults(fields):
         C.generate_plot(divname)
         sys.stdout.write("</SCRIPT><BR><BR>")
         dividx += 1
+
+    tblname = "table_" + str(dividx)
+    divname = "plot_" + str(dividx)
+    sys.stdout.write("""<DIV class='w3-bar w3-food-aubergine w3-padding'>
+<DIV class="w3-bar-item"><SPAN class='w3-xlarge'>{}</SPAN></DIV>
+<DIV class="w3-bar-item w3-right"><SPAN class='w3-large'><INPUT type='checkbox' id='ch1_{}' onchange='toggle_visible(this.checked, "{}", {});'> <LABEL for='ch1_{}'>Table</LABEL> | <INPUT type='checkbox' id='ch2_{}' onchange='toggle_visible(this.checked, "{}", {});'> <LABEL for='ch2_{}'>Plot</LABEL>""".format(total.country, dividx, tblname, dividx, dividx, dividx, divname, dividx, dividx))
+#    sys.stdout.write(""" | Download as: <A href='results/{}' download>Comma-delimited</A> - <A href='results/{}' download>Tab-delimited</A> - <A href='results/{}' download>Excel</A>""".format(C.csvfile, C.tsvfile, C.xlsfile))
+
+    sys.stdout.write("""</SPAN></DIV></DIV>""")
+        
+    sys.stdout.write("""<DIV id='{}' style='display:none;'><TABLE class='w3-table w3-striped w3-border'>
+<TR>
+{}
+</TR>
+        """.format(tblname, total.headers))
+
+    for k in sorted(total.data.keys()):
+        row = total.data[k]
+        sys.stdout.write(total.rowformat.format(*row))
+    sys.stdout.write("""</TABLE></DIV>
+<DIV id='{}' style='display:none;' class='plotdiv'></DIV>
+<SCRIPT>""".format(divname))
+    total.generate_plot(divname)
+    sys.stdout.write("</SCRIPT><BR><BR>")
+        
     sys.stdout.write("</DIV> <!-- close panel -->\n")
     
 def main():
