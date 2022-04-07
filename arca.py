@@ -195,29 +195,37 @@ def showResults(fields):
         sys.stdout.write("</SCRIPT><BR><BR>")
         dividx += 1
 
-    tblname = "table_" + str(dividx)
-    divname = "plot_" + str(dividx)
-    sys.stdout.write("""<DIV class='w3-bar w3-food-aubergine w3-padding'>
+    if len(countrydata) > 1:
+        # Output results object containing totals
+
+        allcountries = [c.country for c in countrydata]
+        total.write_to_file("results/" + total.csvfile, countries=allcountries)
+        total.write_to_file("results/" + total.tsvfile, delimiter='\t', countries=allcountries)
+        total.write_to_excel("results/" + total.xlsfile, countries=allcountries)
+        
+        tblname = "table_" + str(dividx)
+        divname = "plot_" + str(dividx)
+        sys.stdout.write("""<DIV class='w3-bar w3-food-aubergine w3-padding'>
 <DIV class="w3-bar-item"><SPAN class='w3-xlarge'>{}</SPAN></DIV>
 <DIV class="w3-bar-item w3-right"><SPAN class='w3-large'><INPUT type='checkbox' id='ch1_{}' onchange='toggle_visible(this.checked, "{}", {});'> <LABEL for='ch1_{}'>Table</LABEL> | <INPUT type='checkbox' id='ch2_{}' onchange='toggle_visible(this.checked, "{}", {});'> <LABEL for='ch2_{}'>Plot</LABEL>""".format(total.country, dividx, tblname, dividx, dividx, dividx, divname, dividx, dividx))
-#    sys.stdout.write(""" | Download as: <A href='results/{}' download>Comma-delimited</A> - <A href='results/{}' download>Tab-delimited</A> - <A href='results/{}' download>Excel</A>""".format(C.csvfile, C.tsvfile, C.xlsfile))
+        sys.stdout.write(""" | Download as: <A href='results/{}' download>Comma-delimited</A> - <A href='results/{}' download>Tab-delimited</A> - <A href='results/{}' download>Excel</A>""".format(total.csvfile, total.tsvfile, total.xlsfile))
 
-    sys.stdout.write("""</SPAN></DIV></DIV>""")
+        sys.stdout.write("""</SPAN></DIV></DIV>""")
         
-    sys.stdout.write("""<DIV id='{}' style='display:none;'><TABLE class='w3-table w3-striped w3-border'>
+        sys.stdout.write("""<DIV id='{}' style='display:none;'><TABLE class='w3-table w3-striped w3-border'>
 <TR>
 {}
 </TR>
         """.format(tblname, total.headers))
 
-    for k in sorted(total.data.keys()):
-        row = total.data[k]
-        sys.stdout.write(total.rowformat.format(*row))
-    sys.stdout.write("""</TABLE></DIV>
+        for k in sorted(total.data.keys()):
+            row = total.data[k]
+            sys.stdout.write(total.rowformat.format(*row))
+        sys.stdout.write("""</TABLE></DIV>
 <DIV id='{}' style='display:none;' class='plotdiv'></DIV>
 <SCRIPT>""".format(divname))
-    total.generate_plot(divname)
-    sys.stdout.write("</SCRIPT><BR><BR>")
+        total.generate_plot(divname)
+        sys.stdout.write("</SCRIPT><BR><BR>")
         
     sys.stdout.write("</DIV> <!-- close panel -->\n")
     

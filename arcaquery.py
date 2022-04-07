@@ -45,6 +45,10 @@ class Results(object):
         new.headers = self.headers
         new.colnames = self.colnames
         new.rowformat = self.rowformat
+        ts = timestamp()
+        new.csvfile = "Total_{}.csv".format(ts)
+        new.tsvfile = "Total_{}.tsv".format(ts)
+        new.xlsfile = "Total_{}.xlsx".format(ts)
         return new
     
     def query(self, db, virus_ids, start_year, start_week, end_year, end_week):
@@ -166,17 +170,30 @@ Plotly.newPlot('{}', data, layout);
 """.format(", ".join(traces), self.country, divname))
 
 
-    def write_to_file(self, filename, delimiter=','):
+    def write_to_file(self, filename, delimiter=',', countries=None):
         with open(filename, "w") as out:
+            if countries:
+                out.write("# The following sheet contains total cases for the following countries:\n")
+                for c in countries:
+                    out.write("# " + c + "\n")
             out.write(delimiter.join(self.colnames) + "\n")
             for k in sorted(self.data.keys()):
                 row = self.data[k]
                 out.write(self.country + delimiter + delimiter.join([str(x) for x in row]) + "\n")
                 
-    def write_to_excel(self, filename):
+    def write_to_excel(self, filename, countries=None):
         wb = xlsxwriter.Workbook(filename, {'strings_to_numbers': True})
         ### workbook.set_properties({'author': 'A. Riva, ariva@ufl.edu', 'company': 'DiBiG - ICBR Bioinformatics'}) # these should be read from conf or command-line
         bold = wb.add_format({'bold': 1})
+
+        if countries:
+            ws = wb.add_worksheet("Countries")
+            ws.write(0, 0, "The following sheet contains total cases for the following countries:")
+            row = 2
+            for c in countries:
+                ws.write(row, 0, c)
+                row += 1
+        
         ws = wb.add_worksheet("Cases")
         row = 0
         col = 0
