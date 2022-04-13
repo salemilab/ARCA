@@ -69,37 +69,36 @@ class Results(object):
         for v in self.viruses:
             self.headers += "<TH class='w3-right-align'>" + v + "</TH>"
             self.colnames.append(v)
-            self.rowformat += "<TD class='w3-right-align'>{:,d}</TD>"
+            self.rowformat += "<TD class='w3-right-align'>{}</TD>"
         self.headers += "</TR>\n"
         self.rowformat += "</TR>\n"
 
         ncolumns = len(self.viruses)
-        row = ["", ""] + [0]*ncolumns
+        #row = ["", ""] + ["NR"]*ncolumns
         vp = {}
         pos = 2
         for v in self.virus_ids:
             vp[int(v)] = pos
             pos += 1
-                
+
         for rd in self.rawdata:
             #sys.stdout.write("{}<BR>".format(rd))
             if rd[0] == start_year and rd[1] < start_week:
                 continue
             if rd[0] == end_year and rd[1] > end_week:
                 continue
-            if rd[0] != row[0] or rd[1] != row[1]:
-                if row[0]:
-                    key = "{}_{:02}".format(rd[0], rd[1])
-                    row = ["", ""] + [0]*ncolumns
-                    self.data[key] = row
-                    self.keys.add(key)
-                row[0] = rd[0]
-                row[1] = rd[1]
-                
+
+            key = "{}_{:02}".format(rd[0], rd[1])
+            if key in self.data:
+                row = self.data[row]
+            else:
+                row = [rd[0], rd[1]] + ["NR"]*ncolumns
+                self.data[key] = row
+                self.keys.add(key)
             virus = rd[2]
             field = vp[virus]
             #sys.stdout.write("{}\n".format(field))
-            row[field] = rd[3]
+            row[field] = "{:,}".format(rd[3])
         #self.data.append(row)
 
     def add(self, other):

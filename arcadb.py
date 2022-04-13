@@ -44,7 +44,9 @@ def getCases(db, countryid, virus_ids, start_year, start_week, end_year, end_wee
 def getSummaryData(db):
     data = {}
     virus_names = []
-    
+
+    tablerows = ""
+    totalcases = 0
     virus_ids = getViruses(db)
     for vir in virus_ids:
         vid = vir[0]
@@ -52,20 +54,27 @@ def getSummaryData(db):
         virus_names.append(vn)
         initial = db.execute("SELECT min(year) FROM Cases WHERE virus=?;", (vid,)).fetchone()[0]
         final   = db.execute("SELECT max(year) FROM Cases WHERE virus=?;", (vid,)).fetchone()[0]
+        cases   = db.execute("SELECT sum(cases) FROM Cases a, Countries b WHERE a.country=b.idx and b.code='C' and virus=?;", (vid,)).fetchone()[0]
         data[vn + "_i"] = initial
         data[vn + "_f"] = final
-        cases = db.execute("SELECT sum(cases) FROM Cases a, Countries b WHERE a.country=b.idx and b.code='C' and virus=?;", (vid,)).fetchone()[0]
         data[vn + "_cases"] = "{:,}".format(cases)
+        tablerows += "<TR><TD>{}</TD><TD>{} - {}</TD><TD class='w3-right'>{:,}</TD></TR>\n".format(vn, initial, final, cases)
+        totalcases += cases
+    tablerows += "<TR><TD><b>Total</b></TD><TD></TD><TD class='w3-right'><b>{:,}</b></TD></TR>\n".format(totalcases)
+    data["viruscounts"] = tablerows
     data["virus_names"] = virus_names
     data["viruses"] = ", ".join(virus_names)
     data["ncountries"] = db.execute("SELECT count(*) FROM Countries WHERE code='C';").fetchone()[0]
 
     tablerows = ""
     regions = getRegionIds(db)
+    totalcases = 0
     for reg in regions:
         regcount = db.execute("select sum(cases) from Cases a, Countries b where a.country=b.idx and b.subregion=? and b.code='C';", (reg[0],)).fetchone()[0]
         row = "<TR><TD>{}</TD><TD class='w3-right'>{:,}</TD></TR>\n".format(reg[1], regcount)
         tablerows += row
+        totalcases += regcount
+    tablerows += "<TR><TD><b>Total</b></TD><TD class='w3-right'><b>{:,}</b></TD></TR>\n".format(totalcases)
     data["regcounts"] = tablerows
     return data
 
