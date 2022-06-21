@@ -90,7 +90,7 @@ class Results(object):
 
             key = "{}_{:02}".format(rd[0], rd[1])
             if key in self.data:
-                row = self.data[row]
+                row = self.data[key]
             else:
                 row = [rd[0], rd[1]] + ["NR"]*ncolumns
                 self.data[key] = row
@@ -112,7 +112,17 @@ class Results(object):
             d2 = other.data[k] if k in other.data else None
             if d1 and d2:
                 for i in range(ncolumns):
-                    d1[i+2] += d2[i+2]
+                    v1 = d1[i+2]
+                    v2 = d2[i+2]
+                    if v1 == "NR" and v2 == "NR":
+                        nv = "NR"
+                    elif v1 == "NR":
+                        nv = v2
+                    elif v2 == "NR":
+                        nv = v1
+                    else:
+                        nv = "{:,}".format(int(v1.replace(",", "")) + int(v2.replace(",", "")))
+                    d1[i+2] = nv
                 newdata[k] = d1
             elif d1:
                 newdata[k] = d1
@@ -121,7 +131,8 @@ class Results(object):
         self.data = newdata
         self.keys = keyset
                 
-    def generate_plot(self, divname):
+    def generate_plot(self, divname, uselog=False, smooth=True):
+        line = "spline" if smooth else "linear"
         nviruses = len(self.virus_ids)
         ntrace = 1
         traces = []
@@ -137,7 +148,11 @@ class Results(object):
             for k in sorted(self.data.keys()):
                 row = self.data[k]
                 xs.append("{:.2f}".format(row[0] + row[1] / 52))
-                ys.append(row[j])
+                y = row[j]
+                if y == "NR":
+                    ys.append("0")
+                else:
+                    ys.append(y.replace(",", ""))
                           
             sys.stdout.write("""
  var {} = {{
@@ -146,13 +161,19 @@ class Results(object):
   type: 'scatter',
   line: {{
     color: '{}',            
-    shape: 'spline'
+    shape: '{}'
   }},
   name: '{}',
 }};
 
-""".format(tracename, ",".join(xs), ",".join([ str(y) for y in ys ]), self.viruscolors[int(self.virus_ids[i])],  virus_name))
+""".format(tracename, ",".join(xs), ",".join(ys), self.viruscolors[int(self.virus_ids[i])], line, virus_name))
             ntrace += 1
+        logaxis = """  yaxis: {
+    type: 'log',
+    autorange: true
+  },
+"""
+
         sys.stdout.write("""
 var data = [{}];
 
@@ -161,12 +182,13 @@ var layout = {{
   xaxis: {{
     tickangle: -90
   }},
-  barmode: 'group'
+  {}
+  barmode: 'group',
 }};
 
 Plotly.newPlot('{}', data, layout);
 }}
-""".format(", ".join(traces), self.country, divname))
+""".format(", ".join(traces), self.country, logaxis if uselog else "", divname))
 
 
     def write_to_file(self, filename, delimiter=',', countries=None):
@@ -211,3 +233,62 @@ Plotly.newPlot('{}', data, layout);
             r += 1
         wb.close()
         
+def multi_country_plot(divname, countrydata, uselog, smooth):
+    C1 = countrydata[0]
+    virus_name = C1.viruses[0]
+    line = "spline" if smooth else "linear"
+    
+    traces = []
+    idx = 1
+    
+    sys.stdout.write("""function draw_{}() {{""".format(divname))
+    for C in countrydata:
+        xs = []
+        ys = []
+        tracename = "ttrace_" + str(idx)
+        traces.append(tracename)
+        
+        for k in sorted(C.data.keys()):
+            row = C.data[k]
+            xs.append("{:.2f}".format(row[0] + row[1] / 52))
+            y = row[2]
+            if y == "NR":
+                ys.append("0")
+            else:
+                ys.append(y.replace(",", ""))
+
+        sys.stdout.write("""
+ var {} = {{
+  x: [{}],
+  y: [{}],
+  type: 'scatter',
+  line: {{
+    shape: '{}'
+  }},
+  name: '{}',
+}};
+
+""".format(tracename, ",".join(xs), ",".join(ys), line, C.country))
+        idx += 1
+
+    logaxis = """  yaxis: {
+    type: 'log',
+    autorange: true
+  },
+"""
+
+    sys.stdout.write("""
+var data = [{}];
+
+var layout = {{
+  title: 'Selected countries',
+  xaxis: {{
+    tickangle: -90
+  }},
+  {}
+  barmode: 'group',
+}};
+
+Plotly.newPlot('{}', data, layout);
+}}
+""".format(", ".join(traces), logaxis if uselog else "", divname))

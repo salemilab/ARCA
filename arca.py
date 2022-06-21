@@ -129,6 +129,18 @@ def showSearch():
     sys.stdout.write(generateMenu('f_country', F.countries, rows=12))
     sys.stdout.write("""</DIV>
   </DIV>
+  <DIV class='w3-padding w3-cell-row'>
+    <DIV class='w3-col m3'>Plot options:</DIV>
+    <DIV class='w3-col m3'>
+      <INPUT type='checkbox' name='f_spline' class='w3-check' checked><LABEL> Smooth lines</LABEL>
+    </DIV>
+    <DIV class='w3-col m3'>
+      <INPUT type='checkbox' name='f_log' class='w3-check'><LABEL> Use log scale</LABEL>
+    </DIV>
+    <DIV class='w3-col m3'>
+      <INPUT type='checkbox' name='f_sep' class='w3-check'><LABEL> Show by country in total</LABEL>
+    </DIV>
+  </DIV>
   <DIV class='w3-padding'>
     <INPUT id='search_submit' name="search_submit" type='submit' value='Submit' class='w3-btn w3-green w3-round-large w3-large' disabled><BR><span id='warn_msg'>Please select at least one virus and at least one region or country.</span><BR><BR><BR>
   </DIV>
@@ -161,6 +173,9 @@ def getResults(fields):
     return results
     
 def showResults(fields):
+    smooth = 'f_spline' in fields
+    uselog = 'f_log' in fields
+    separate = 'f_sep' in fields
     countrydata = getResults(fields)
     sys.stdout.write("""<DIV class="w3-panel" id="mainpanel">
   <H1>ARCA - Results</H1>
@@ -191,7 +206,7 @@ def showResults(fields):
         sys.stdout.write("""</TABLE></DIV>
 <DIV id='{}' style='display:none;' class='plotdiv'></DIV>
 <SCRIPT>""".format(divname))
-        C.generate_plot(divname)
+        C.generate_plot(divname, uselog=uselog, smooth=smooth)
         sys.stdout.write("</SCRIPT><BR><BR>")
         dividx += 1
 
@@ -224,7 +239,10 @@ def showResults(fields):
         sys.stdout.write("""</TABLE></DIV>
 <DIV id='{}' style='display:none;' class='plotdiv'></DIV>
 <SCRIPT>""".format(divname))
-        total.generate_plot(divname)
+        if separate:
+            arcaquery.multi_country_plot(divname, countrydata, uselog, smooth)
+        else:
+            total.generate_plot(divname, uselog=uselog, smooth=smooth)
         sys.stdout.write("</SCRIPT><BR><BR>")
         
     sys.stdout.write("</DIV> <!-- close panel -->\n")
