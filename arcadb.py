@@ -41,6 +41,10 @@ def getCases(db, countryid, virus_ids, start_year, start_week, end_year, end_wee
     query = "SELECT year, week, virus, cases FROM Cases WHERE virus IN (" + v + ") AND country=? AND year >= ? AND year <= ? ORDER BY year, week;"
     return db.execute(query, (countryid, start_year, end_year)).fetchall()
 
+def getCasesForMap(db, virus_id, year, cumulative=False):
+    query = "SELECT c.week, x.country, c.{} FROM Cases c, Countries x WHERE virus=? AND year=? AND c.country = x.idx AND x.code = 'C' ORDER BY week DESC;".format("totalcases" if cumulative else "cases")
+    return db.execute(query, (virus_id, year)).fetchall()
+
 def getSummaryData(db):
     data = {}
     virus_names = []
@@ -71,9 +75,10 @@ def getSummaryData(db):
     totalcases = 0
     for reg in regions:
         regcount = db.execute("select sum(cases) from Cases a, Countries b where a.country=b.idx and b.subregion=? and b.code='C';", (reg[0],)).fetchone()[0]
-        row = "<TR><TD>{}</TD><TD class='w3-right'>{:,}</TD></TR>\n".format(reg[1], regcount)
-        tablerows += row
-        totalcases += regcount
+        if regcount:
+            row = "<TR><TD>{}</TD><TD class='w3-right'>{:,}</TD></TR>\n".format(reg[1], regcount)
+            tablerows += row
+            totalcases += regcount
     tablerows += "<TR><TD><b>Total</b></TD><TD class='w3-right'><b>{:,}</b></TD></TR>\n".format(totalcases)
     data["regcounts"] = tablerows
     return data

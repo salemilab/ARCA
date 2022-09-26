@@ -20,3 +20,20 @@
     height: 500px;
 /*    border: 1px solid blue; */
 }
+
+/* for dynamic maps */
+.mapcontainer {
+    width: 800px;
+    height: 1100px;
+    position: relative;
+/*    border: 1px solid lightgrey; */
+}
+.mapdiv {
+    height: 1100px;
+    width: 800px;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    z-index: 1;
+    background: rgba(255,255,255,1.0);
+}

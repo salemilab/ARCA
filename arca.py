@@ -49,10 +49,12 @@ def preamble(page):
       <A href='?pg=home' class="w3-bar-item w3-button {}">Home</A>
       <A href='?pg=summary' class="w3-bar-item w3-button {}">ARCA Summary</A>
       <A href='?pg=search' class="w3-bar-item w3-button {}">Search ARCA</A>
+      <A href='?pg=map' class="w3-bar-item w3-button {}">Dynamic Map</A>
     </DIV>
 """.format("w3-light-grey" if page == "home" else "",
            "w3-light-grey" if page == "guide" else "",
-           "w3-light-grey" if page == "search" else ""))
+           "w3-light-grey" if page == "search" else "",
+           "w3-light-grey" if page == "map" else ""))
     
 def closing():
     sys.stdout.write("""    
@@ -130,7 +132,9 @@ def showSearch():
     sys.stdout.write("""</DIV>
   </DIV>
   <DIV class='w3-padding w3-cell-row'>
-    <DIV class='w3-col m3'>Plot options:</DIV>
+    <DIV class='w3-col'><B>Plot options:</B>       <INPUT type='checkbox' id='f_spline' name='f_spline' class='w3-check' checked><LABEL for='f_spline'> Smooth lines</LABEL>  &nbsp;&nbsp;     <INPUT type='checkbox' id='f_log' name='f_log' class='w3-check'><LABEL for='f_log'> Use log scale</LABEL>  &nbsp;&nbsp;     <INPUT type='checkbox' id='f_sep' name='f_sep' class='w3-check'><LABEL for='f_sep'> Show by country in total</LABEL></DIV>
+<!--
+    <DIV class='w3-col m3'><H4>Plot options:</H4></DIV>
     <DIV class='w3-col m3'>
       <INPUT type='checkbox' name='f_spline' class='w3-check' checked><LABEL> Smooth lines</LABEL>
     </DIV>
@@ -140,6 +144,7 @@ def showSearch():
     <DIV class='w3-col m3'>
       <INPUT type='checkbox' name='f_sep' class='w3-check'><LABEL> Show by country in total</LABEL>
     </DIV>
+-->
   </DIV>
   <DIV class='w3-padding'>
     <INPUT id='search_submit' name="search_submit" type='submit' value='Submit' class='w3-btn w3-green w3-round-large w3-large' disabled><BR><span id='warn_msg'>Please select at least one virus and at least one region or country.</span><BR><BR><BR>
@@ -246,6 +251,141 @@ def showResults(fields):
         sys.stdout.write("</SCRIPT><BR><BR>")
         
     sys.stdout.write("</DIV> <!-- close panel -->\n")
+
+def generateMapMenu(name, choices, value):
+    menu = """
+<SELECT id='{}' name='{}' class='w3-input w3-border' onchange='validate_submit_map("{}");'>
+""".format(name, name, name)
+    menu += "<OPTION value='0'>Choose one...</OPTION>"
+    for row in choices:
+        menu += "<OPTION value='{}' {}>{}</OPTION>".format(row[0], "selected" if str(row[0]) == value else "", row[1])
+    menu += "</SELECT>\n"
+    return menu
+
+def showMap(fields):
+    F = arcadb.FormData()
+    F.load()
+    sy = int(F.start_year)
+    ey = int(F.end_year)
+    years = [ [x, x] for x in list(range(sy, ey+1)) ]
+
+    # Get menu selections if present
+    year = fields["f_year"].value if "f_year" in fields else "0"
+    virus = fields["f_virus"].value if "f_virus" in fields else "0"
+    drange = fields["f_range"].value if "f_range" in fields else "weekly"
+    cumulative = (drange == "cumulative")
+    
+    sys.stdout.write("""<DIV class="w3-panel" id="mainpanel">
+  <H1>ARCA - Dynamic Map</H1>
+  <FORM action='#' id='arca_map' method='post'>
+    <DIV class='w3-cell-row w3-padding'>
+      <DIV class='w3-col m3 w3-padding'><LABEL>Virus:</LABEL>
+""")
+    sys.stdout.write(generateMapMenu('f_virus', F.viruses, virus))
+    sys.stdout.write("""</DIV><DIV class='w3-col m3 w3-padding'><LABEL>Year:</LABEL>
+""")
+    sys.stdout.write(generateMapMenu('f_year', years, year))
+    if year == "0" or virus == "0":
+        status = "disabled"
+    else:
+        status = ""
+    sys.stdout.write("""</DIV>
+<DIV class='w3-col m3 w3-padding'><LABEL>Cases:</LABEL><BR>
+  <INPUT class='w3-radio' type='radio' name='f_range' value='weekly' {}> Weekly <INPUT class='w3-radio' type='radio' name='f_range' value='cumulative' {}> Cumulative
+</DIV>
+<DIV class='w3-col m3 w3-padding'>
+<LABEL>&nbsp;</LABEL><BR><INPUT id='map_submit' type='submit' class='w3-btn w3-green w3-round-large w3-large' {} value='Go!'>
+</DIV>
+</DIV>
+</FORM>""".format("" if cumulative else "checked", "checked" if cumulative else "", status))
+
+    if year != "0" and virus != "0":
+        db = arcadb.opendb()
+        try:
+            data = arcadb.getCasesForMap(db, virus, year, cumulative=cumulative)
+        finally:
+            db.close()
+
+        maxcases = max([ row[2] for row in data ])
+        maxweek = data[0][0]
+
+        sys.stdout.write("""  <CENTER>
+      <FORM>
+        <INPUT class='w3-btn w3-green w3-round-large' type='button' value='<< Previous' onclick='updateSlider(-1);'> <INPUT id='weekslider' type='range' min="1" max="{}" value="1" class="slider" style="width: 80%;"> <INPUT class='w3-btn w3-green w3-round-large' type='button' value='Next >>' onclick='updateSlider(1);'><BR>
+Week <SPAN id='slidervalue'>1</SPAN>
+      </FORM>
+<HR>
+        <DIV id='mapcontainer' class='mapcontainer'>
+          <DIV class='mapdiv' id="mapdiv1"></DIV>
+        </DIV>
+        <BR><BR><BR><BR><BR><BR><BR><BR>
+      <SCRIPT>
+
+        var layout = {{mapbox: {{center: {{lon: -80, lat: 0}}, zoom: 2.2}},
+                  title: {{'text': '{}', 'font': {{'size': 36}} }},
+                  width: 800, height:1100}};
+
+        var config = {{mapboxAccessToken: "pk.eyJ1IjoiYXJpdmE2NyIsImEiOiJjbDdrdHQ0dDQwdDB4M3ZtcTI1MXQ2cmd6In0.ZAV9aHnwaHEIxCyq6O3fVA"}};
+
+        """.format(maxweek, "Cumulative cases" if cumulative else "Weekly cases"))
+
+        countries = []
+        cases = []
+        week = maxweek
+        for d in data:
+            if d[0] == week:
+                countries.append('"' + d[1] + '"')
+                cases.append(str(d[2]))
+            else:
+            # Week is finished, write it out
+                sys.stdout.write("""    
+    var data{} = [{{
+        type: "choroplethmapbox", locations: ['Vatican',{}], z: [{},{}],
+      geojson: "https://salemilab.epi.ufl.edu/ARCA/map/countries-fixed.geojson"
+    }}];
+    """.format(week, ",".join(countries), maxcases, ",".join(cases)))
+
+                week = d[0]
+                countries = ['"' + d[1] + '"']
+                cases = [str(d[2])]
+
+        sys.stdout.write("""    
+    var data{} = [{{
+        type: "choroplethmapbox", locations: ['Vatican',{}], z: [{},{}],
+      geojson: "https://salemilab.epi.ufl.edu/ARCA/map/countries-fixed.geojson"
+    }}];
+    """.format(week, ",".join(countries), maxcases, ",".join(cases)))
+
+#        for i in range(maxweek, 0, -1):
+#            sys.stdout.write("""
+#        Plotly.newPlot('map{}', data{}, layout, config);
+#""".format(i, i))
+
+        sys.stdout.write("""
+
+        var slider = document.getElementById("weekslider");
+        var output = document.getElementById("slidervalue");
+        function updateMap() {
+            v = slider.value;
+            output.innerHTML = v;
+            Plotly.react('mapdiv1', eval("data" + v), layout, config);
+        }
+        slider.oninput = updateMap;
+        function updateSlider(x) {
+          slider = document.getElementById("weekslider");
+          current = parseInt(slider.value);
+          newvalue = current + x;
+          if ((newvalue >= slider.min) && (newvalue <= slider.max)) {
+            slider.value = newvalue;
+            updateMap();
+          }
+        }
+        Plotly.newPlot('mapdiv1', data1, layout, config);
+      </SCRIPT>
+      </CENTER>
+    """)
+        
+    sys.stdout.write("</DIV> <!-- close panel -->\n")
     
 def main():
     fields = cgi.FieldStorage()
@@ -265,7 +405,8 @@ def main():
         showSearch()
     elif page == "results":
         showResults(fields)
-        
+    elif page == "map":
+        showMap(fields)
     closing()
 
 if __name__ == "__main__":

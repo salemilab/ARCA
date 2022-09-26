@@ -73,3 +73,19 @@ function toggle_visible(chk, elt, idx) {
 	el.style.display = 'none';
     }
 }
+
+
+function validate_submit_map(field) {
+    sub_btn = document.getElementById('map_submit');
+    virus_menu = document.getElementById('f_virus');
+    year_menu = document.getElementById('f_year');
+
+    good = ( (virus_menu.value != "0") && (year_menu.value != "0") )
+
+    if (good) {
+	sub_btn.removeAttribute('disabled');
+    } else {
+	sub_btn.setAttribute('disabled', 'Y');
+    }
+}
+
